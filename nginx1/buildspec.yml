@@ -1,0 +1,22 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      docker: 18
+  pre_build:
+    commands:
+      - echo test
+      - echo $(docker --version)
+      - $(aws ecr get-login --region us-west-1 --no-include-email)
+  build:
+    commands:
+      - echo Build started on `date`
+      - echo $$CODEBUILD_RESOLVED_SOURCE_VERSION
+      - docker build -t nginx1 .
+      - docker tag nginx1:latest $ECR_REPOSITORY_URI:$CODEBUILD_RESOLVED_SOURCE_VERSION
+      - docker push $ECR_REPOSITORY_URI:$CODEBUILD_RESOLVED_SOURCE_VERSION
+      - printf '[{"name":"nginx1","imageUri":"%s"}]' "$ECR_REPOSITORY_URI:$CODEBUILD_RESOLVED_SOURCE_VERSION" > imageDetail.json
+artifacts:
+  files:
+    - imageDetail.json
